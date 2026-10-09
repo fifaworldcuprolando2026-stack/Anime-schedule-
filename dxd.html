@@ -1,0 +1,841 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RedLineAnime</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+html, body { min-height: 100%; }
+body {
+  background-color: #0a0e17;
+  background-image: url('https://i.ibb.co.com/gZ9YJtBX/background-desktop.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: #e6edf3;
+  padding: 15px;
+}
+@media (max-width: 768px) { body { background-attachment: scroll; background-position: center top; } }
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background: linear-gradient(180deg, rgba(10,14,23,0.75) 0%, rgba(6,8,16,0.85) 100%);
+  z-index: -1; pointer-events: none;
+}
+.loading-screen { position: fixed; inset: 0; background: #0a0e17; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
+.loading-screen.hide { opacity: 0; pointer-events: none; }
+.spinner { width: 60px; height: 60px; border: 4px solid #1f2a40; border-top-color: #ff4d4d; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { margin-top: 20px; color: #8b9bb4; font-size: 0.9rem; letter-spacing: 2px; }
+.error-box { display: none; max-width: 500px; padding: 20px; background: rgba(218,54,51,0.1); border: 1px solid rgba(218,54,51,0.4); border-radius: 12px; color: #ff6b6b; text-align: center; margin: 20px auto; }
+.error-box.show { display: block; }
+.error-box i { font-size: 2rem; margin-bottom: 10px; display: block; }
+.schedule-section { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; display: none; }
+.schedule-section.show { display: block; }
+.schedule-header { display: flex; justify-content: space-between; align-items: center; background: rgba(13,21,38,0.85); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 12px; border: 1px solid #1f2a40; border-bottom: 2px solid #ff4d4d; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+.logo { font-size: 1.4rem; font-weight: bold; color: #fff; }
+.logo span { color: #ff4d4d; }
+.tg-btn { background: #229ED9; color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; transition: 0.3s; }
+.tg-btn:hover { background: #1a7fb0; }
+.filter-section { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 0 10px; }
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.filter-divider { width: 80%; max-width: 600px; height: 1px; background: linear-gradient(90deg, transparent, #1f2a40, transparent); }
+.filter-btn { padding: 9px 18px; background: rgba(13,21,38,0.85); border: 2px solid #1f2a40; color: #8b9bb4; border-radius: 24px; cursor: pointer; font-size: 0.9rem; font-weight: 700; transition: 0.3s; display: flex; align-items: center; gap: 6px; }
+.filter-btn:hover { border-color: #4dabff; color: #4dabff; }
+.filter-btn.all-btn.active { background: linear-gradient(135deg, #0088cc, #0055a5); border-color: #0088cc; color: #fff; }
+.filter-btn.status-btn.active { background: linear-gradient(135deg, #ff4d4d, #cc0000); border-color: #ff4d4d; color: #fff; }
+.filter-btn.status-btn[data-status="ongoing"] { border-color: rgba(63,185,80,0.3); color: #3fb950; }
+.filter-btn.status-btn[data-status="ongoing"].active { background: linear-gradient(135deg, #16a34a, #15803d); border-color: #16a34a; color: #fff; }
+.filter-btn.status-btn[data-status="upcoming"] { border-color: rgba(255,200,0,0.3); color: #ffc800; }
+.filter-btn.status-btn[data-status="upcoming"].active { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #f59e0b; color: #fff; }
+.filter-btn.post-btn { border-color: rgba(139,92,246,0.3); color: #a78bfa; }
+.filter-btn.post-btn.active { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #8b5cf6; color: #fff; box-shadow: 0 6px 20px rgba(139,92,246,0.5); }
+.filter-btn.day-btn.active { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #8b5cf6; color: #fff; }
+.controls { display: flex; justify-content: space-between; align-items: center; padding: 0 0 10px; gap: 12px; flex-wrap: wrap; }
+.search-box { flex: 1; min-width: 200px; max-width: 400px; padding: 9px 15px; border-radius: 25px; border: 1px solid #1f2a40; background: rgba(13,21,38,0.9); color: #e6edf3; font-size: 0.95rem; outline: none; }
+.search-box:focus { border-color: #00aaff; }
+.view-toggle { display: flex; gap: 8px; }
+.view-toggle button { background: #0d1526; border: 1px solid #1f2a40; color: #8b949e; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+.view-toggle button.active { background: #ff4d4d; color: #fff; border-color: #ff4d4d; }
+#animeList { display: grid; gap: 15px; grid-template-columns: 1fr; padding-bottom: 20px; }
+#animeList.grid-view { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+/* ANIME CARD */
+.anime-card { background: rgba(14,22,38,0.92); backdrop-filter: blur(8px); border: 1px solid #1a2438; border-radius: 14px; padding: 16px; display: flex; gap: 18px; transition: 0.3s; position: relative; overflow: hidden; }
+.anime-card:hover { border-color: #2a3a55; transform: translateY(-2px); }
+.anime-card.pinned-card { border-color: rgba(255,200,0,0.5); box-shadow: 0 4px 20px rgba(255,200,0,0.15); }
+.card-poster { width: 130px; min-width: 130px; height: 185px; object-fit: cover; border-radius: 10px; background: #060810; }
+.card-body { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pinned-indicator { position: absolute; top: 8px; left: 8px; background: rgba(255,200,0,0.9); color: #000; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 10px; display: none; align-items: center; gap: 4px; z-index: 5; }
+.pinned-indicator.show { display: inline-flex; }
+.card-title { font-size: 1.15rem; font-weight: 700; color: #fff; line-height: 1.35; word-wrap: break-word; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.badge { font-size: 0.72rem; padding: 4px 11px; border-radius: 6px; background: #131e35; color: #8b9bb4; border: 1px solid #1f2a40; font-weight: 500; }
+.badge.season { background: #10233f; color: #4dabff; border-color: #1a3a6b; }
+.badge.lang.hindi { background: rgba(255,200,0,0.1); color: #ffc800; border-color: #ffc800; font-weight: 600; }
+.badge.status-badge { font-weight: 700; text-transform: uppercase; }
+.badge.status-badge.ongoing { background: rgba(22,163,74,0.15); color: #3fb950; border-color: rgba(22,163,74,0.4); }
+.badge.status-badge.upcoming { background: rgba(245,158,11,0.15); color: #ffc800; border-color: rgba(245,158,11,0.4); }
+.release-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.release-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; padding: 5px 12px; border-radius: 6px; background: #131e35; color: #a8b8d0; border: 1px solid #1f2a40; }
+.release-badge i { color: #4dabff; font-size: 0.75rem; }
+.release-date-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; padding: 5px 12px; border-radius: 6px; background: rgba(139,92,246,0.1); color: #a78bfa; border: 1px solid rgba(139,92,246,0.4); font-weight: 600; }
+.countdown { background: #0a121f; border: 1px solid #1a2438; border-radius: 12px; padding: 16px 18px; min-width: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.countdown-label { font-size: 0.75rem; color: #8b9bb4; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.countdown-timer { display: flex; gap: 8px; }
+.time-unit { display: flex; flex-direction: column; align-items: center; background: #131e35; border-radius: 8px; padding: 10px 8px; min-width: 58px; border: 1px solid #1f2a40; }
+.time-val { font-size: 1.4rem; font-weight: 700; color: #ffffff; line-height: 1; }
+.time-lbl { font-size: 0.6rem; color: #6b7a94; letter-spacing: 1px; margin-top: 6px; text-transform: uppercase; font-weight: 600; }
+.published-text { color: #3fb950; font-weight: 700; font-size: 1.05rem; letter-spacing: 2px; display: inline-flex; align-items: center; gap: 8px; }
+.date-only-box { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 20px; background: rgba(0,170,255,0.06); border: 1px solid rgba(0,170,255,0.3); border-radius: 10px; width: 100%; text-align: center; }
+.date-only-value { color: #4dabff; font-weight: 700; font-size: 1.05rem; }
+.date-not-announced { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 18px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.4); border-radius: 10px; color: #ffc800; font-weight: 700; font-size: 0.9rem; width: 100%; text-align: center; }
+#animeList.grid-view .anime-card { flex-direction: column; }
+#animeList.grid-view .card-poster { width: 100%; height: 220px; }
+#animeList.grid-view .countdown { min-width: unset; width: 100%; }
+
+/* PLATFORM BADGE */
+.platforms-section { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(31,42,64,0.4); }
+.platforms-label { font-size: 0.65rem; color: #8b9bb4; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.platforms-label i { color: #4dabff; font-size: 0.7rem; }
+.platforms-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.platform-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 4px; background: rgba(19,30,53,0.6); border: 1px solid rgba(77,171,255,0.18); border-radius: 20px; color: #a8b8d0; font-size: 0.68rem; font-weight: 600; transition: all 0.25s ease; white-space: nowrap; height: 26px; }
+.platform-badge:hover { background: rgba(77,171,255,0.1); border-color: rgba(77,171,255,0.4); color: #4dabff; transform: translateY(-1px); }
+.platform-badge img { width: 18px; height: 18px; object-fit: contain; border-radius: 50%; background: #fff; padding: 1px; flex-shrink: 0; }
+.platform-badge .platform-text-icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; line-height: 1; background: rgba(77,171,255,0.12); border-radius: 50%; flex-shrink: 0; }
+
+/* POST CARD */
+.post-card { background: rgba(14,22,38,0.92); backdrop-filter: blur(8px); border: 1px solid #1a2438; border-radius: 14px; overflow: hidden; transition: 0.3s; cursor: pointer; display: flex; flex-direction: column; }
+.post-card:hover { border-color: #4dabff; transform: translateY(-4px); box-shadow: 0 8px 30px rgba(77,171,255,0.2); }
+.post-card-cover { width: 100%; height: 200px; object-fit: cover; background: #060810; }
+.post-card-body { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.post-card-title { font-size: 1.15rem; font-weight: 700; color: #fff; line-height: 1.3; }
+.post-card-bio { font-size: 0.88rem; color: #a8b8d0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.post-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; border-top: 1px dashed #1f2a40; }
+.post-card-date { font-size: 0.72rem; color: #6b7a94; display: flex; align-items: center; gap: 5px; }
+.post-card-date i { color: #4dabff; }
+.post-card-read { font-size: 0.8rem; color: #4dabff; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+#animeList.grid-view .post-card { flex-direction: column; }
+
+.empty-state { grid-column: 1/-1; text-align: center; color: #8b9bb4; padding: 60px 20px; }
+.empty-state i { font-size: 3rem; color: #1f2a40; margin-bottom: 15px; display: block; }
+.footer-credit { text-align: center; color: #6b7a94; font-size: 0.75rem; padding: 20px 10px; border-top: 1px solid #1f2a40; margin-top: 20px; }
+.footer-credit strong { color: #4dabff; }
+
+/* POST MODAL */
+.post-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: flex-start; z-index: 2000; padding: 20px; overflow-y: auto; }
+.post-modal-overlay.show { display: flex; }
+.post-modal { background: #0e1626; border: 1px solid #1f2a40; border-radius: 16px; width: 100%; max-width: 900px; margin: 20px auto; position: relative; }
+.post-close-btn { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; background: rgba(218,54,51,0.9); color: #fff; border: none; cursor: pointer; font-size: 1.1rem; z-index: 10; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+.post-close-btn:hover { background: #b62324; transform: rotate(90deg); }
+.post-modal-cover { width: 100%; max-height: 400px; object-fit: cover; display: block; border-radius: 16px 16px 0 0; background: #060810; }
+.post-modal-content { padding: 25px; }
+
+/* LANGUAGE SWITCHER */
+.lang-switcher {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+  background: #0a121f;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid #1f2a40;
+  width: fit-content;
+  flex-wrap: wrap;
+}
+.lang-btn {
+  padding: 7px 16px;
+  background: transparent;
+  border: none;
+  color: #8b9bb4;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+}
+.lang-btn:hover {
+  color: #4dabff;
+}
+.lang-btn.active {
+  background: linear-gradient(135deg, #0088cc, #0055a5);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(0, 136, 204, 0.4);
+}
+
+.post-modal-title { font-size: 1.8rem; font-weight: 800; color: #fff; line-height: 1.3; margin-bottom: 12px; padding-right: 40px; }
+.post-modal-bio { font-size: 1rem; color: #a8b8d0; line-height: 1.6; margin-bottom: 20px; font-style: italic; padding-left: 15px; border-left: 3px solid #4dabff; }
+.post-modal-meta { font-size: 0.78rem; color: #6b7a94; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; }
+.post-modal-meta span { display: inline-flex; align-items: center; gap: 5px; }
+.post-modal-meta i { color: #4dabff; }
+.post-modal-details { font-size: 1rem; color: #d1d5db; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 25px; }
+.video-section { margin: 25px 0; }
+.video-label { font-size: 0.85rem; color: #4dabff; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; background: #000; }
+.video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+/* COMMENTS */
+.comments-section { padding: 0 25px 25px; }
+.comments-title { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; padding-top: 20px; border-top: 1px solid #1f2a40; }
+.comments-title i { color: #4dabff; }
+.comment-count { background: #131e35; color: #4dabff; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; margin-left: 5px; }
+.comment-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #1f2a40; }
+.comment-input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #1f2a40; background: #0a121f; color: #e6edf3; font-size: 0.9rem; outline: none; font-family: inherit; }
+.comment-input:focus { border-color: #00aaff; }
+.comment-textarea { width: 100%; min-height: 80px; padding: 10px 14px; border-radius: 8px; border: 1px solid #1f2a40; background: #0a121f; color: #e6edf3; font-size: 0.9rem; outline: none; resize: vertical; font-family: inherit; }
+.comment-textarea:focus { border-color: #00aaff; }
+.comment-submit { align-self: flex-end; background: #ff4d4d; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem; transition: 0.3s; }
+.comment-submit:hover { background: #cc0000; }
+.comment-submit:disabled { background: #4a2020; cursor: not-allowed; }
+.comment-item { display: flex; gap: 12px; padding: 15px 0; border-bottom: 1px solid #1a2438; }
+.comment-item:last-child { border-bottom: none; }
+.comment-avatar { width: 42px; height: 42px; min-width: 42px; border-radius: 50%; background: linear-gradient(135deg,#4dabff,#0088cc); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; }
+.comment-body { flex: 1; min-width: 0; }
+.comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+.comment-author { font-weight: 700; color: #4dabff; font-size: 0.9rem; }
+.comment-time { font-size: 0.7rem; color: #6b7a94; }
+.comment-text { color: #d1d5db; font-size: 0.9rem; line-height: 1.5; word-wrap: break-word; }
+.empty-comments { text-align: center; color: #6b7a94; padding: 30px 15px; font-size: 0.9rem; }
+.empty-comments i { font-size: 2.5rem; color: #1f2a40; display: block; margin-bottom: 10px; }
+
+@media (max-width: 750px) {
+  .anime-card { flex-wrap: wrap; }
+  .card-poster { width: 100px; min-width: 100px; height: 145px; }
+  .card-title { font-size: 1rem; }
+  .countdown { min-width: 100%; padding: 12px; }
+  .time-unit { min-width: 48px; padding: 8px 5px; }
+  .time-val { font-size: 1.1rem; }
+  .time-lbl { font-size: 0.55rem; }
+  .post-modal-title { font-size: 1.3rem; }
+  .post-modal-content { padding: 18px; }
+  .comments-section { padding: 0 18px 18px; }
+}
+@media (max-width: 480px) {
+  body { padding: 10px; }
+  .logo { font-size: 1.1rem; }
+  .time-unit { min-width: 42px; padding: 6px 4px; }
+  .time-val { font-size: 1rem; }
+  .filter-btn { padding: 7px 12px; font-size: 0.75rem; }
+  .lang-btn { padding: 6px 12px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">LOADING...</div>
+</div>
+
+<div class="error-box" id="errorBox">
+  <i class="fa-solid fa-triangle-exclamation"></i>
+  <h3 style="color: #ff6b6b; margin-bottom: 10px;">Connection Failed</h3>
+  <p style="color: #e6edf3;">Data load হচ্ছে না। Internet connection চেক করুন।</p>
+</div>
+
+<div class="schedule-section" id="scheduleSection">
+  <div class="schedule-header">
+    <div class="logo">Anime World <span>DXD Hindi</span></div>
+    <a href="https://t.me/RedLineAnime" target="_blank" class="tg-btn">
+      <i class="fa-brands fa-telegram"></i> Telegram Channel Join
+    </a>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-row">
+      <button class="filter-btn all-btn active" data-filter="all" onclick="selectFilter('all')">
+        <i class="fa-solid fa-layer-group"></i> ALL
+      </button>
+      <button class="filter-btn status-btn" data-status="ongoing" onclick="selectFilter('ongoing')">
+        <i class="fa-solid fa-play"></i> ONGOING
+      </button>
+      <button class="filter-btn status-btn" data-status="upcoming" onclick="selectFilter('upcoming')">
+        <i class="fa-solid fa-clock"></i> UPCOMING
+      </button>
+      <button class="filter-btn post-btn" data-filter="posts" onclick="selectFilter('posts')">
+        <i class="fa-solid fa-newspaper"></i> POSTS
+      </button>
+    </div>
+    <div class="filter-divider" id="dayDivider"></div>
+    <div class="filter-row" id="dayFilterRow">
+      <button class="filter-btn day-btn" data-day="Saturday" onclick="selectFilter('Saturday')">Saturday</button>
+      <button class="filter-btn day-btn" data-day="Sunday" onclick="selectFilter('Sunday')">Sunday</button>
+      <button class="filter-btn day-btn" data-day="Monday" onclick="selectFilter('Monday')">Monday</button>
+<button class="filter-btn day-btn" data-day="Wednesday" onclick="selectFilter('Wednesday')">Wednesday</button>
+      <button class="filter-btn day-btn" data-day="Thursday" onclick="selectFilter('Thursday')">Thursday</button>
+      <button class="filter-btn day-btn" data-day="Friday" onclick="selectFilter('Friday')">Friday</button>
+      <button class="filter-btn day-btn" data-day="Daily" onclick="selectFilter('Daily')">Daily</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input type="text" class="search-box" id="searchBox" placeholder="Search..." oninput="renderContent()">
+    <div class="view-toggle">
+      <button id="listBtn" class="active" onclick="setView('list')">List</button>
+      <button id="gridBtn" onclick="setView('grid')">Grid</button>
+    </div>
+  </div>
+
+  <div id="animeList"></div>
+</div>
+
+<div class="footer-credit">
+  Powered by <strong>Anime World DXD Hindi</strong>
+</div>
+
+<div class="post-modal-overlay" id="postModalOverlay">
+  <div class="post-modal">
+    <button class="post-close-btn" onclick="closePostModal()"><i class="fa-solid fa-xmark"></i></button>
+    <div id="postModalInner"></div>
+  </div>
+</div>
+
+<script>
+var FIREBASE_PROJECT_ID = "redline-anime-9ba6c";
+var FIREBASE_API_KEY = "AIzaSyD4vO8wbkUC2Ten0BTgURsd2VvqRPYWZhk";
+var FIRESTORE_BASE_URL = "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT_ID + "/databases/(default)/documents";
+
+var animeData = [];
+var postsData = [];
+var currentView = "list";
+var currentFilter = "all";
+var currentPostId = null;
+var currentPostLang = "en";
+
+var DAY_FILTERS = ["Saturday","Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Daily"];
+var STATUS_FILTERS = ["ongoing","upcoming"];
+
+function parseLocalISO(str) {
+  if (!str) return new Date(NaN);
+  var parts = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!parts) return new Date(str);
+  return new Date(parseInt(parts[1],10), parseInt(parts[2],10)-1, parseInt(parts[3],10), parseInt(parts[4],10), parseInt(parts[5],10), 0, 0);
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return "";
+  var d = parseLocalISO(dateStr + "T00:00");
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str).replace(/[&<>"']/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    if (m === '"') return '&quot;';
+    if (m === "'") return '&#39;';
+    return m;
+  });
+}
+
+function timeAgo(timestamp) {
+  if (!timestamp) return "";
+  var diff = Math.floor((Date.now() - timestamp) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+  if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+  if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
+  return new Date(timestamp).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function extractYouTubeId(url) {
+  if (!url) return null;
+  var patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+  for (var i = 0; i < patterns.length; i++) {
+    var m = url.match(patterns[i]);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function parseFirestoreValue(v) {
+  if (!v) return null;
+  if (v.stringValue !== undefined) return v.stringValue;
+  if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+  if (v.doubleValue !== undefined) return parseFloat(v.doubleValue);
+  if (v.booleanValue !== undefined) return v.booleanValue;
+  if (v.nullValue !== undefined) return null;
+  if (v.timestampValue !== undefined) return v.timestampValue;
+  if (v.arrayValue !== undefined) {
+    var arr = [];
+    if (v.arrayValue.values) v.arrayValue.values.forEach(function(x) { arr.push(parseFirestoreValue(x)); });
+    return arr;
+  }
+  if (v.mapValue !== undefined) {
+    var obj = {};
+    var fields = v.mapValue.fields || {};
+    for (var key in fields) if (fields.hasOwnProperty(key)) obj[key] = parseFirestoreValue(fields[key]);
+    return obj;
+  }
+  return null;
+}
+
+function parseFirestoreDocument(doc) {
+  var result = { id: "" };
+  if (doc.name) {
+    var parts = doc.name.split("/");
+    result.id = parts[parts.length - 1];
+  }
+  var fields = doc.fields || {};
+  for (var key in fields) if (fields.hasOwnProperty(key)) result[key] = parseFirestoreValue(fields[key]);
+  return result;
+}
+
+function buildFirestoreFields(obj) {
+  var fields = {};
+  for (var key in obj) {
+    if (!obj.hasOwnProperty(key)) continue;
+    var val = obj[key];
+    if (val === null || val === undefined) fields[key] = { nullValue: null };
+    else if (typeof val === "string") fields[key] = { stringValue: val };
+    else if (typeof val === "number") {
+      if (Number.isInteger(val)) fields[key] = { integerValue: String(val) };
+      else fields[key] = { doubleValue: val };
+    }
+    else if (typeof val === "boolean") fields[key] = { booleanValue: val };
+  }
+  return fields;
+}
+
+function hideLoading() {
+  document.getElementById("loadingScreen").classList.add("hide");
+  document.getElementById("scheduleSection").classList.add("show");
+}
+
+function showError() {
+  document.getElementById("loadingScreen").classList.add("hide");
+  document.getElementById("errorBox").classList.add("show");
+}
+
+function selectFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll(".filter-btn").forEach(function(btn) { btn.classList.remove("active"); });
+  if (filter === "all") document.querySelector('.filter-btn.all-btn').classList.add("active");
+  else if (STATUS_FILTERS.indexOf(filter) !== -1) document.querySelector('.filter-btn.status-btn[data-status="' + filter + '"]').classList.add("active");
+  else if (filter === "posts") document.querySelector('.filter-btn.post-btn').classList.add("active");
+  else if (DAY_FILTERS.indexOf(filter) !== -1) document.querySelector('.filter-btn.day-btn[data-day="' + filter + '"]').classList.add("active");
+
+  var dayRow = document.getElementById("dayFilterRow");
+  var dayDivider = document.getElementById("dayDivider");
+  if (filter === "posts") {
+    dayRow.style.display = "none";
+    dayDivider.style.display = "none";
+  } else {
+    dayRow.style.display = "flex";
+    dayDivider.style.display = "block";
+  }
+  renderContent();
+}
+
+function setView(v) {
+  currentView = v;
+  document.getElementById("listBtn").classList.toggle("active", v === "list");
+  document.getElementById("gridBtn").classList.toggle("active", v === "grid");
+  renderContent();
+}
+
+function fetchCollection(name, callback) {
+  var url = FIRESTORE_BASE_URL + "/" + name + "?key=" + FIREBASE_API_KEY;
+  fetch(url)
+    .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function(data) {
+      var list = [];
+      if (data.documents && data.documents.length > 0) {
+        data.documents.forEach(function(doc) { list.push(parseFirestoreDocument(doc)); });
+      }
+      callback(list);
+    })
+    .catch(function(err) { callback([]); });
+}
+
+function loadAllData() {
+  var loaded = 0;
+  fetchCollection("anime", function(list) {
+    animeData = list;
+    loaded++;
+    if (loaded === 2) { renderContent(); hideLoading(); }
+  });
+  fetchCollection("posts", function(list) {
+    var now = Date.now();
+    postsData = list.filter(function(p) {
+      if (!p.expiryDate) return true;
+      var expTime = new Date(p.expiryDate + "T23:59:59").getTime();
+      return expTime >= now;
+    });
+    loaded++;
+    if (loaded === 2) { renderContent(); hideLoading(); }
+  });
+}
+
+function sortAnimeByTime(arr) {
+  return arr.slice().sort(function(a, b) {
+    var aPinned = !!a.adminPinned, bPinned = !!b.adminPinned;
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    var aNoDate = !!a.dateNotAnnounced, bNoDate = !!b.dateNotAnnounced;
+    if (aNoDate && !bNoDate) return 1;
+    if (!aNoDate && bNoDate) return -1;
+    var now = Date.now();
+    var aTime = getSortTime(a), bTime = getSortTime(b);
+    var aReleased = aTime <= now, bReleased = bTime <= now;
+    if (aReleased && !bReleased) return 1;
+    if (!aReleased && bReleased) return -1;
+    return aTime - bTime;
+  });
+}
+
+function getSortTime(a) {
+  if (a.status === "upcoming" && a.upcomingDate) return parseLocalISO(a.upcomingDate + "T00:00").getTime();
+  if (a.target) return parseLocalISO(a.target).getTime();
+  return Infinity;
+}
+
+function renderContent() {
+  if (currentFilter === "posts") renderPosts();
+  else renderAnime();
+}
+
+function renderAnime() {
+  var searchInput = document.getElementById("searchBox");
+  var query = searchInput ? searchInput.value.toLowerCase() : "";
+  var list = document.getElementById("animeList");
+  if (!list) return;
+  list.className = currentView === "grid" ? "grid-view" : "";
+
+  var filtered = animeData.filter(function(a) {
+    var matchesSearch = a.title.toLowerCase().indexOf(query) !== -1;
+    var matchesFilter = false;
+    if (currentFilter === "all") matchesFilter = true;
+    else if (STATUS_FILTERS.indexOf(currentFilter) !== -1) matchesFilter = (a.status || "ongoing") === currentFilter;
+    else if (DAY_FILTERS.indexOf(currentFilter) !== -1) matchesFilter = a.releaseDay === currentFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  filtered = sortAnimeByTime(filtered);
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-tv"></i><p>No anime found</p></div>';
+    return;
+  }
+
+  var html = "";
+  filtered.forEach(function(a) {
+    var langs = (a.langs || "").split(",");
+    var langBadges = "";
+    langs.forEach(function(l) {
+      var t = l.trim();
+      if (!t) return;
+      var isHindi = t.toLowerCase() === "hindi";
+      langBadges += '<span class="badge lang ' + (isHindi ? 'hindi' : '') + '">' + escapeHtml(t) + '</span>';
+    });
+
+    var coverImg = a.cover || 'https://via.placeholder.com/130x185/0a121f/4dabff?text=No+Image';
+    var status = a.status || "ongoing";
+    var statusBadge = '<span class="badge status-badge ' + status + '"><i class="fa-solid ' + (status === "ongoing" ? 'fa-play' : 'fa-clock') + '"></i> ' + status.toUpperCase() + '</span>';
+
+    var countdownHTML = "";
+    if (a.dateNotAnnounced) {
+      countdownHTML = '<div class="countdown"><div class="countdown-label">Releases In</div><div class="date-not-announced"><i class="fa-solid fa-triangle-exclamation"></i> Date Not Announced</div></div>';
+    } else if (status === "upcoming" && a.upcomingDate) {
+      var d = parseLocalISO(a.upcomingDate + "T00:00");
+      var formatted = d.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+      countdownHTML = '<div class="countdown"><div class="countdown-label">Coming On</div><div class="date-only-box"><div class="date-only-value"><i class="fa-solid fa-calendar-check"></i>' + formatted + '</div></div></div>';
+    } else {
+      countdownHTML = '<div class="countdown" data-target="' + (a.target || '') + '"><div class="countdown-label">Next Episode</div><div class="countdown-timer"></div></div>';
+    }
+
+    var platformsHTML = "";
+    if (a.platforms && a.platforms.length > 0) {
+      var badgesHTML = "";
+      a.platforms.forEach(function(pid) {
+        var p = getPlatformById(pid);
+        if (!p) return;
+        var iconHTML = "";
+        if (p.logo) iconHTML = '<img src="' + p.logo + '" onerror="this.style.display=\'none\'">';
+        else iconHTML = '<span class="platform-text-icon" style="color:' + (p.color || '#4dabff') + ';"><i class="' + p.textIcon + '"></i></span>';
+        badgesHTML += '<div class="platform-badge">' + iconHTML + '<span>' + escapeHtml(p.name) + '</span></div>';
+      });
+      if (badgesHTML) {
+        platformsHTML = '<div class="platforms-section"><div class="platforms-label"><i class="fa-solid fa-tv"></i> Available On</div><div class="platforms-row">' + badgesHTML + '</div></div>';
+      }
+    }
+
+    var isAdminPinned = !!a.adminPinned;
+    var dateBadgeHTML = "";
+    if (status === "ongoing" && a.target) {
+      var targetDate = parseLocalISO(a.target);
+      if (!isNaN(targetDate.getTime())) {
+        var dateOnlyStr = String(targetDate.getFullYear()) + "-" + String(targetDate.getMonth() + 1).padStart(2, "0") + "-" + String(targetDate.getDate()).padStart(2, "0");
+        var formattedShort = formatDateShort(dateOnlyStr);
+        if (formattedShort) {
+          dateBadgeHTML = '<span class="release-date-badge"><i class="fa-regular fa-calendar-days"></i> ' + formattedShort + '</span>';
+        }
+      }
+    }
+
+    html += '<div class="anime-card ' + (isAdminPinned ? 'pinned-card' : '') + '">';
+    if (isAdminPinned) html += '<div class="pinned-indicator show"><i class="fa-solid fa-thumbtack"></i> PINNED</div>';
+    html += '<img class="card-poster" src="' + coverImg + '" onerror="this.src=\'https://via.placeholder.com/130x185/0a121f/4dabff?text=No+Image\'">';
+    html += '<div class="card-body">';
+    html += '<div class="card-title">' + escapeHtml(a.title) + '</div>';
+    html += '<div class="badges">';
+    if (a.season) html += '<span class="badge season">' + escapeHtml(a.season) + '</span>';
+    if (a.episode) html += '<span class="badge season">' + escapeHtml(a.episode) + '</span>';
+    html += statusBadge;
+    html += '</div>';
+    html += '<div class="badges">' + langBadges + '</div>';
+    html += '<div class="release-row">';
+    if (a.releaseDay) html += '<span class="release-badge"><i class="fa-regular fa-calendar"></i> ' + escapeHtml(a.releaseDay) + '</span>';
+    if (a.releaseTime) html += '<span class="release-badge"><i class="fa-regular fa-clock"></i> ' + escapeHtml(a.releaseTime) + '</span>';
+    html += dateBadgeHTML;
+    html += '</div>';
+    html += platformsHTML;
+    html += '</div>';
+    html += countdownHTML;
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+  updateAllCountdowns();
+}
+
+var DEFAULT_PLATFORMS = [
+  { id: "crunchyroll", name: "Crunchyroll", logo: "https://i.ibb.co.com/997g6CwF/41o03-Hy-OYl-L-h1.png" },
+  { id: "anime_time", name: "Anime Time", logo: "https://i.ibb.co.com/PGMFdLd5/images-2.jpg" },
+  { id: "netflix", name: "Netflix", logo: "https://i.ibb.co.com/sJ9D2qqX/images-3.jpg" },
+  { id: "muse_india", name: "Muse India", logo: "https://i.ibb.co.com/zWT7G8X0/channels4-profile.jpg" },
+  { id: "youtube", name: "YouTube", textIcon: "fa-brands fa-youtube", color: "#FF0000" },
+  { id: "muse_asia", name: "Muse Asia", textIcon: "fa-solid fa-circle-play", color: "#1E5B9E" },
+  { id: "anione", name: "Ani-One Asia", textIcon: "fa-solid fa-star", color: "#FF6600" },
+  { id: "hidive", name: "HiDive", textIcon: "fa-solid fa-droplet", color: "#7B4EAB" },
+  { id: "hulu", name: "Hulu", textIcon: "fa-solid fa-play", color: "#1CE783" },
+  { id: "duronto", name: "Duronto TV", textIcon: "fa-solid fa-tv", color: "#00AEEF" }
+];
+
+var customPlatforms = [];
+try { customPlatforms = JSON.parse(localStorage.getItem("awd_custom_platforms") || "[]"); } catch (e) {}
+
+function getPlatformById(id) {
+  var p = DEFAULT_PLATFORMS.find(function(x) { return x.id === id; });
+  if (p) return p;
+  p = customPlatforms.find(function(x) { return x.id === id; });
+  return p || null;
+}
+
+function renderPosts() {
+  var searchInput = document.getElementById("searchBox");
+  var query = searchInput ? searchInput.value.toLowerCase() : "";
+  var list = document.getElementById("animeList");
+  if (!list) return;
+  list.className = currentView === "grid" ? "grid-view" : "";
+
+  var filtered = postsData.filter(function(p) {
+    return p.title.toLowerCase().indexOf(query) !== -1;
+  });
+  filtered.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-newspaper"></i><p>No posts found</p></div>';
+    return;
+  }
+
+  var html = "";
+  filtered.forEach(function(p) {
+    var coverImg = p.cover || 'https://via.placeholder.com/400x200/0a121f/4dabff?text=Post';
+    var bio = p.bio || "";
+    var shortBio = bio.length > 130 ? bio.substring(0, 130) + "..." : bio;
+    html += '<div class="post-card" onclick="openPostModal(\'' + p.id + '\')">';
+    html += '<img class="post-card-cover" src="' + coverImg + '" onerror="this.src=\'https://via.placeholder.com/400x200/0a121f/4dabff?text=Post\'">';
+    html += '<div class="post-card-body">';
+    html += '<div class="post-card-title">' + escapeHtml(p.title) + '</div>';
+    html += '<div class="post-card-bio">' + escapeHtml(shortBio) + '</div>';
+    html += '<div class="post-card-footer">';
+    html += '<div class="post-card-date"><i class="fa-regular fa-clock"></i> ' + timeAgo(p.createdAt) + '</div>';
+    html += '<div class="post-card-read">Read <i class="fa-solid fa-arrow-right"></i></div>';
+    html += '</div></div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function openPostModal(postId) {
+  var post = postsData.find(function(p) { return p.id === postId; });
+  if (!post) return;
+  currentPostId = postId;
+  currentPostLang = "en";
+  
+  var videoId = extractYouTubeId(post.youtube);
+  var videoHTML = "";
+  if (videoId) {
+    videoHTML = '<div class="video-section"><div class="video-label"><i class="fa-brands fa-youtube"></i> Watch Video</div><div class="video-wrapper"><iframe src="https://www.youtube.com/embed/' + videoId + '" allowfullscreen></iframe></div></div>';
+  }
+  
+  var postHTML =
+    '<img class="post-modal-cover" src="' + escapeHtml(post.cover || '') + '" onerror="this.src=\'https://via.placeholder.com/900x400/0a121f/4dabff?text=Post\'">' +
+    '<div class="post-modal-content">' +
+      '<div class="lang-switcher">' +
+        '<button class="lang-btn active" data-lang="en" onclick="switchPostLang(\'en\')"><i class="fa-solid fa-language"></i> English</button>' +
+        '<button class="lang-btn" data-lang="hi" onclick="switchPostLang(\'hi\')">हिन्दी</button>' +
+        '<button class="lang-btn" data-lang="bn" onclick="switchPostLang(\'bn\')">বাংলা</button>' +
+      '</div>' +
+      '<div class="post-modal-title" id="postTitleDisplay">' + escapeHtml(post.title) + '</div>' +
+      '<div class="post-modal-bio" id="postBioDisplay">' + escapeHtml(post.bio) + '</div>' +
+      '<div class="post-modal-meta"><span><i class="fa-regular fa-clock"></i> Posted ' + timeAgo(post.createdAt) + '</span></div>' +
+      '<div class="post-modal-details" id="postDetailsDisplay">' + escapeHtml(post.details) + '</div>' +
+      videoHTML +
+    '</div>' +
+    '<div class="comments-section">' +
+      '<div class="comments-title"><i class="fa-solid fa-comments"></i> Comments <span class="comment-count" id="commentCount">0</span></div>' +
+      '<div class="comment-form">' +
+        '<input type="text" class="comment-input" id="cName" placeholder="Your name..." maxlength="50">' +
+        '<textarea class="comment-textarea" id="cText" placeholder="Write your comment..." maxlength="1000"></textarea>' +
+        '<button class="comment-submit" id="cSubmit" onclick="submitComment()"><i class="fa-solid fa-paper-plane"></i> Post Comment</button>' +
+      '</div>' +
+      '<div id="commentsList"><div class="empty-comments"><i class="fa-regular fa-comments"></i>Loading comments...</div></div>' +
+    '</div>';
+  
+  document.getElementById("postModalInner").innerHTML = postHTML;
+  document.getElementById("postModalOverlay").classList.add("show");
+  document.body.style.overflow = "hidden";
+  loadComments(postId);
+}
+
+function switchPostLang(lang) {
+  var post = postsData.find(function(p) { return p.id === currentPostId; });
+  if (!post) return;
+  currentPostLang = lang;
+  
+  var title = post.title || "";
+  var bio = post.bio || "";
+  var details = post.details || "";
+  
+  if (lang === "hi") {
+    title = post.titleHi || post.title || "";
+    bio = post.bioHi || post.bio || "";
+    details = post.detailsHi || post.details || "";
+  } else if (lang === "bn") {
+    title = post.titleBn || post.title || "";
+    bio = post.bioBn || post.bio || "";
+    details = post.detailsBn || post.details || "";
+  }
+  
+  document.getElementById("postTitleDisplay").textContent = title;
+  document.getElementById("postBioDisplay").textContent = bio;
+  document.getElementById("postDetailsDisplay").textContent = details;
+  
+  document.querySelectorAll(".lang-btn").forEach(function(b) {
+    b.classList.toggle("active", b.getAttribute("data-lang") === lang);
+  });
+}
+
+function closePostModal() {
+  document.getElementById("postModalOverlay").classList.remove("show");
+  document.body.style.overflow = "";
+  document.getElementById("postModalInner").innerHTML = "";
+  currentPostId = null;
+}
+
+document.getElementById("postModalOverlay").addEventListener("click", function(e) {
+  if (e.target === this) closePostModal();
+});
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closePostModal();
+});
+
+function loadComments(postId) {
+  var url = FIRESTORE_BASE_URL + "/comments?key=" + FIREBASE_API_KEY;
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var comments = [];
+      if (data.documents && data.documents.length > 0) {
+        data.documents.forEach(function(doc) {
+          var c = parseFirestoreDocument(doc);
+          if (c.postId === postId) comments.push(c);
+        });
+      }
+      comments.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      renderComments(comments);
+    })
+    .catch(function(err) { renderComments([]); });
+}
+
+function renderComments(comments) {
+  var countEl = document.getElementById("commentCount");
+  if (countEl) countEl.textContent = comments.length;
+  var listEl = document.getElementById("commentsList");
+  if (!listEl) return;
+  if (comments.length === 0) {
+    listEl.innerHTML = '<div class="empty-comments"><i class="fa-regular fa-comments"></i>No comments yet. Be the first!</div>';
+    return;
+  }
+  var html = "";
+  comments.forEach(function(c) {
+    var initial = (c.name || "?").charAt(0).toUpperCase();
+    html += '<div class="comment-item"><div class="comment-avatar">' + escapeHtml(initial) + '</div><div class="comment-body"><div class="comment-header"><span class="comment-author">' + escapeHtml(c.name || "Anonymous") + '</span><span class="comment-time">' + timeAgo(c.createdAt) + '</span></div><div class="comment-text">' + escapeHtml(c.text) + '</div></div></div>';
+  });
+  listEl.innerHTML = html;
+}
+
+function submitComment() {
+  if (!currentPostId) return;
+  var name = document.getElementById("cName").value.trim();
+  var text = document.getElementById("cText").value.trim();
+  if (!name) { alert("Please enter your name!"); return; }
+  if (!text) { alert("Please write a comment!"); return; }
+  var btn = document.getElementById("cSubmit");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Posting...';
+  var commentObj = { postId: currentPostId, name: name, text: text, createdAt: Date.now() };
+  var url = FIRESTORE_BASE_URL + "/comments?key=" + FIREBASE_API_KEY;
+  fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: buildFirestoreFields(commentObj) }) })
+    .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function() {
+      document.getElementById("cName").value = "";
+      document.getElementById("cText").value = "";
+      loadComments(currentPostId);
+    })
+    .catch(function(err) { alert("Comment failed: " + err.message); })
+    .finally(function() { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Post Comment'; });
+}
+
+function updateAllCountdowns() {
+  document.querySelectorAll(".countdown").forEach(function(box) {
+    var target = box.getAttribute("data-target");
+    var timerEl = box.querySelector(".countdown-timer");
+    if (!timerEl) return;
+    if (!target) { timerEl.innerHTML = '<span style="color:#6b7a94;font-size:0.8rem;">Time not set</span>'; return; }
+    var diff = parseLocalISO(target).getTime() - Date.now();
+    if (diff <= 0) { timerEl.innerHTML = '<span class="published-text"><i class="fa-solid fa-circle-check"></i> PUBLISHED</span>'; return; }
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+    timerEl.innerHTML = '<div class="time-unit"><span class="time-val">' + pad(d) + '</span><span class="time-lbl">Days</span></div><div class="time-unit"><span class="time-val">' + pad(h) + '</span><span class="time-lbl">Hrs</span></div><div class="time-unit"><span class="time-val">' + pad(m) + '</span><span class="time-lbl">Min</span></div><div class="time-unit"><span class="time-val">' + pad(s) + '</span><span class="time-lbl">Sec</span></div>';
+  });
+}
+
+function pad(n) { n = String(n); while (n.length < 2) n = "0" + n; return n; }
+
+setInterval(updateAllCountdowns, 1000);
+loadAllData();
+setTimeout(function() {
+  var ls = document.getElementById("loadingScreen");
+  if (ls && !ls.classList.contains("hide")) hideLoading();
+}, 10000);
+setInterval(loadAllData, 60000);
+</script>
+</body>
+</html>
